@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-# build_corpus.py
 # Extrai texto de PDF/EPUB, faz chunking com overlap e grava JSONL por documento.
-# Ajustado para estrutura:
+# Estrutura esperada do projeto:
 # books_rag/
 #   ├─ corpus/jsonl/
 #   ├─ raw/epub/  raw/pdf/
 #   ├─ working/manifests/
-#   └─ src/build_corpus.py
+#   └─ src/extract_book_data.py
 
 import os, re, json, csv, argparse, sys
 from pathlib import Path
@@ -24,25 +23,23 @@ from bs4 import BeautifulSoup
 # ==========================
 # Helpers de caminho/raiz
 # ==========================
+USER_HOME = Path.home()
+
 def detect_repo_root() -> Path:
     """
-    Considera que este arquivo está em books_rag/src/ e define a raiz como .. (books_rag).
+    Assume que este arquivo está em books_rag/src/ e define a raiz como .. (books_rag).
     Se o layout estiver diferente, tenta subir diretórios até encontrar 'raw' e 'corpus'.
     """
     here = Path(__file__).resolve()
     cand = here.parents[1]  # .../books_rag
-    raw = cand / "raw"
-    corpus = cand / "corpus"
-    if raw.exists() and corpus.exists():
+    if (cand / "raw").exists() and (cand / "corpus").exists():
         return cand
-    # fallback: sobe até 5 níveis procurando raw/corpus
     p = here
     for _ in range(5):
         p = p.parent
         if (p / "raw").exists() and (p / "corpus").exists():
             return p
-    # último recurso: pasta do script
-    return here.parent
+    return here.parent  # fallback
 
 def ensure_writable_dir(path: Path) -> Path:
     path.mkdir(parents=True, exist_ok=True)
@@ -50,6 +47,21 @@ def ensure_writable_dir(path: Path) -> Path:
         print(f"[ERRO] Sem permissão de escrita em: {path}")
         sys.exit(1)
     return path
+
+def rel_or_abs(root: Path, p: str) -> Path:
+    """
+    Converte caminho relativo (em relação ao --root) ou absoluto.
+    Garante que o resultado fique DENTRO da HOME do usuário (evita /home/books_rag).
+    """
+    pth = Path(p).expanduser()
+    out = (root / pth).resolve() if not pth.is_absolute() else pth.resolve()
+    try:
+        out.relative_to(USER_HOME)
+    except ValueError:
+        print(f"[ERRO] Caminho fora da HOME: {out}\n"
+              f"Use um diretório dentro de {USER_HOME} ou passe um --root correto.")
+        sys.exit(1)
+    return out
 
 # ==========================
 # Utils de texto
@@ -243,9 +255,10 @@ def main():
     ap = argparse.ArgumentParser(description="Extrai texto e cria chunks JSONL de PDFs/EPUBs para RAG.")
     ap.add_argument("--root", type=str, default=str(repo_root_default),
                     help="Raiz do projeto (onde existem raw/, corpus/, working/).")
-    ap.add_argument("--pdf_dir", type=str, default="raw/pdf", help="Subpasta de PDFs (relativa a --root)")
-    ap.add_argument("--epub_dir", type=str, default="raw/epub", help="Subpasta de EPUBs (relativa a --root)")
-    ap.add_argument("--out_jsonl", type=str, default="corpus/jsonl", help="Saída dos JSONL por documento (relativa a --root ou absoluta)")
+    ap.add_argument("--pdf_dir", type=str, default="raw/pdf", help="Subpasta de PDFs (relativa a --root ou absoluta)")
+    ap.add_argument("--epub_dir", type=str, default="raw/epub", help="Subpasta de EPUBs (relativa a --root ou absoluta)")
+    ap.add_argument("--out_jsonl", type=str, default="corpus/jsonl",
+                    help="Saída dos JSONL por documento (relativa a --root ou absoluta)")
     ap.add_argument("--manifest_csv", type=str, default="working/manifests/generated_manifest.csv",
                     help="CSV de inventário (relativo a --root ou absoluto)")
     ap.add_argument("--max_chars", type=int, default=5000, help="Tamanho alvo do chunk (caracteres)")
@@ -254,36 +267,31 @@ def main():
     args = ap.parse_args()
 
     root = Path(args.root).expanduser().resolve()
-
-    def rel_or_abs(p: str) -> Path:
-        pth = Path(p).expanduser()
-        return (root / pth).resolve() if not pth.is_absolute() else pth.resolve()
-
-    pdf_dir = rel_or_abs(args.pdf_dir)
-    epub_dir = rel_or_abs(args.epub_dir)
-    out_dir = rel_or_abs(args.out_jsonl)
-    manifest_csv = rel_or_abs(args.manifest_csv)
+    pdf_dir = rel_or_abs(root, args.pdf_dir)
+    epub_dir = rel_or_abs(root, args.epub_dir)
+    out_dir = rel_or_abs(root, args.out_jsonl)
+    manifest_csv = rel_or_abs(root, args.manifest_csv)
 
     ensure_writable_dir(out_dir)
     ensure_writable_dir(manifest_csv.parent)
 
+    # Listagem informativa
+    pdfs = sorted(p for p in pdf_dir.glob("**/*.pdf") if p.is_file()) if pdf_dir.exists() else []
+    epubs = sorted(p for p in epub_dir.glob("**/*.epub") if p.is_file()) if epub_dir.exists() else []
+    print(f"Encontrados: {len(pdfs)} PDF(s) em {pdf_dir}")
+    print(f"Encontrados: {len(epubs)} EPUB(s) em {epub_dir}")
+
     rows = []
-
     # PDFs
-    if pdf_dir.exists():
-        pdfs = sorted(p for p in pdf_dir.glob("**/*.pdf") if p.is_file())
-        for p in pdfs:
-            info = process_pdf(p, out_dir, args.max_chars, args.overlap, args.min_chars)
-            info["status"] = "chunked"
-            rows.append(info)
-
+    for p in pdfs:
+        info = process_pdf(p, out_dir, args.max_chars, args.overlap, args.min_chars)
+        info["status"] = "chunked"
+        rows.append(info)
     # EPUBs
-    if epub_dir.exists():
-        epubs = sorted(p for p in epub_dir.glob("**/*.epub") if p.is_file())
-        for p in epubs:
-            info = process_epub(p, out_dir, args.max_chars, args.overlap, args.min_chars)
-            info["status"] = "chunked"
-            rows.append(info)
+    for p in epubs:
+        info = process_epub(p, out_dir, args.max_chars, args.overlap, args.min_chars)
+        info["status"] = "chunked"
+        rows.append(info)
 
     # Manifest
     if rows:
