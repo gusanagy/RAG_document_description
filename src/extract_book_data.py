@@ -17,7 +17,7 @@ from pdfminer.high_level import extract_text
 from pdfminer.pdfparser import PDFSyntaxError
 
 # ---- EPUB: ebooklib + bs4 ----
-from ebooklib import epub
+from ebooklib import epub, ITEM_DOCUMENT   # ✅ importa ITEM_DOCUMENT corretamente
 from bs4 import BeautifulSoup
 
 # ==========================
@@ -27,8 +27,8 @@ USER_HOME = Path.home()
 
 def detect_repo_root() -> Path:
     """
-    Assume que este arquivo está em books_rag/src/ e define a raiz como .. (books_rag).
-    Se o layout estiver diferente, tenta subir diretórios até encontrar 'raw' e 'corpus'.
+    Detecta automaticamente a raiz do projeto assumindo que este arquivo
+    está em books_rag/src/. Sobe diretórios até encontrar raw/ e corpus/.
     """
     here = Path(__file__).resolve()
     cand = here.parents[1]  # .../books_rag
@@ -42,6 +42,7 @@ def detect_repo_root() -> Path:
     return here.parent  # fallback
 
 def ensure_writable_dir(path: Path) -> Path:
+    """Cria diretório se não existir e verifica permissão de escrita."""
     path.mkdir(parents=True, exist_ok=True)
     if not os.access(path, os.W_OK):
         print(f"[ERRO] Sem permissão de escrita em: {path}")
@@ -51,7 +52,7 @@ def ensure_writable_dir(path: Path) -> Path:
 def rel_or_abs(root: Path, p: str) -> Path:
     """
     Converte caminho relativo (em relação ao --root) ou absoluto.
-    Garante que o resultado fique DENTRO da HOME do usuário (evita /home/books_rag).
+    Garante que o resultado fique DENTRO da HOME do usuário.
     """
     pth = Path(p).expanduser()
     out = (root / pth).resolve() if not pth.is_absolute() else pth.resolve()
@@ -67,11 +68,13 @@ def rel_or_abs(root: Path, p: str) -> Path:
 # Utils de texto
 # ==========================
 def slugify(s: str) -> str:
+    """Transforma string em ID seguro (sem espaços ou acentos)."""
     s = re.sub(r"[^\w\s\-\.]+", "", s, flags=re.UNICODE)
     s = re.sub(r"\s+", "-", s.strip())
     return s.lower()[:120] if s else "untitled"
 
 def clean_text(t: str) -> str:
+    """Limpa texto, remove quebras desnecessárias e normaliza espaços."""
     if not t:
         return ""
     t = t.replace("\u00ad", "")  # soft hyphen
@@ -90,6 +93,7 @@ def clean_text(t: str) -> str:
     return "\n\n".join([re.sub(r"\s+", " ", p).strip() for p in rebuilt if p.strip()])
 
 def guess_title_from_path(p: Path) -> str:
+    """Gera título a partir do nome do arquivo."""
     return p.stem.replace("_", " ").replace("-", " ").strip()
 
 # ==========================
@@ -113,6 +117,7 @@ def iter_pdf_pages(pdf_path: Path) -> Iterator[Tuple[int, str]]:
                 device.close(); retstr.close()
                 yield i, text
     except PDFSyntaxError:
+        # fallback simples: lê todo o PDF de uma vez
         txt = extract_text(str(pdf_path)) or ""
         yield 1, txt
 
@@ -120,19 +125,29 @@ def iter_pdf_pages(pdf_path: Path) -> Iterator[Tuple[int, str]]:
 # Leitura EPUB
 # ==========================
 def iter_epub_chapters(epub_path: Path) -> Iterator[Tuple[str, str]]:
+    """
+    Itera capítulos de um EPUB, retornando (título, texto).
+    Corrigido: usa ITEM_DOCUMENT importado de ebooklib.
+    """
     book = epub.read_epub(str(epub_path))
     spine = [i[0] for i in book.spine]  # ordem de leitura
-    items_doc = {it.get_id(): it for it in book.get_items() if it.get_type() == epub.ITEM_DOCUMENT}
+    # ✅ forma correta de obter apenas documentos textuais
+    items_doc = {it.get_id(): it for it in book.get_items_of_type(ITEM_DOCUMENT)}
+
     for idx, sid in enumerate(spine, start=1):
         if sid in items_doc:
             it = items_doc[sid]
             soup = BeautifulSoup(it.get_content(), "lxml")
+            # tenta extrair título de heading, senão cria nome default
             h = soup.find(re.compile("^h[1-4]$"))
             title = h.get_text(" ", strip=True) if h else f"chapter-{idx}"
+            # normaliza quebras
             for br in soup.find_all("br"): br.replace_with("\n")
+            # preserva blocos de código
             for pre in soup.find_all("pre"):
                 code_text = pre.get_text("\n", strip=False)
                 pre.replace_with(f"\n```code\n{code_text}\n```\n")
+            # remove tags inúteis
             for tag in soup(["script", "style"]): tag.decompose()
             text = soup.get_text("\n", strip=False)
             yield title, text
@@ -141,9 +156,11 @@ def iter_epub_chapters(epub_path: Path) -> Iterator[Tuple[str, str]]:
 # Chunking
 # ==========================
 def sentence_boundaries(text: str) -> List[int]:
+    """Encontra limites aproximados de sentenças para cortes melhores."""
     return [m.end() for m in re.finditer(r"([\.!\?;])\s+", text)]
 
 def chunk_text(text: str, max_chars: int = 5000, overlap: int = 700, min_chars: int = 1200) -> List[str]:
+    """Quebra texto em pedaços (~5k chars) respeitando sentenças e códigos."""
     text = clean_text(text)
     code_blocks = []
     def _protect(m):
@@ -163,6 +180,7 @@ def chunk_text(text: str, max_chars: int = 5000, overlap: int = 700, min_chars: 
         if k >= n: break
         i = max(k - overlap, i + 1)
 
+    # restaura blocos de código e filtra pedaços curtos
     restored = []
     for ch in chunks:
         ch = re.sub(r"@@CODEBLOCK_(\d+)@@", lambda m: code_blocks[int(m.group(1))], ch)
@@ -172,9 +190,10 @@ def chunk_text(text: str, max_chars: int = 5000, overlap: int = 700, min_chars: 
     return restored
 
 # ==========================
-# Processadores
+# Processadores por formato
 # ==========================
 def process_pdf(pdf_path: Path, out_dir: Path, max_chars: int, overlap: int, min_chars: int) -> Dict:
+    """Processa um PDF em chunks JSONL."""
     doc_title = guess_title_from_path(pdf_path)
     doc_id = slugify(f"{doc_title}-{pdf_path.stem}")
     jsonl_path = out_dir / f"{doc_id}.jsonl"
@@ -210,6 +229,7 @@ def process_pdf(pdf_path: Path, out_dir: Path, max_chars: int, overlap: int, min
     }
 
 def process_epub(epub_path: Path, out_dir: Path, max_chars: int, overlap: int, min_chars: int) -> Dict:
+    """Processa um EPUB em chunks JSONL."""
     try:
         book = epub.read_epub(str(epub_path))
         tmeta = book.get_metadata('DC', 'title')
@@ -306,7 +326,7 @@ def main():
     if rows:
         print(f"  Manifest: {manifest_csv}")
     else:
-        print("  Nenhum arquivo encontrado em {pdf_dir} ou {epub_dir}.")
+        print(f"  Nenhum arquivo encontrado em {pdf_dir} ou {epub_dir}.")
 
 if __name__ == "__main__":
     main()
