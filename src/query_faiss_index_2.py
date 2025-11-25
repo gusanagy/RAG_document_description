@@ -43,7 +43,10 @@ from typing import List, Dict, Any
 
 import faiss
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+
 
 
 # ----------------- FAISS UTILS -----------------
@@ -91,13 +94,12 @@ def pretty_print_hits(hits: List[Dict[str, Any]]):
 
 # ----------------- GERAÇÃO COM LLM -----------------
 def generate_answer(question: str, hits: List[Dict[str, Any]], gen_model_name: str,
-                    max_context_chars: int = 4000, dtype_str: str = "fp16", use_bits4: bool = False) -> str:
+                    max_context_chars: int = 1800, dtype_str: str = "fp16", use_bits4: bool = False) -> str:
     """
     Usa Transformers para gerar resposta com base nos trechos recuperados.
     Roda na GPU com dtype selecionado e, opcionalmente, 4-bit (bitsandbytes).
     """
-    import torch
-    from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+    
 
     # monta contexto concatenado
     ctx_parts, used = [], 0
@@ -123,7 +125,7 @@ def generate_answer(question: str, hits: List[Dict[str, Any]], gen_model_name: s
     else:
         torch_dtype = torch.float32
 
-    device_map = "auto"  # distribui para GPU(s) automaticamente
+    device_map = "cuda" if torch.cuda.is_available() else "cpu"  # agnóstico: usa GPU se disponível, senão CPU
 
     if use_bits4:
         try:
@@ -161,6 +163,26 @@ def generate_answer(question: str, hits: List[Dict[str, Any]], gen_model_name: s
     if "Resposta:" in out:
         out = out.split("Resposta:", 1)[-1].strip()
     return out.strip()
+def rerank_hits(query: str, hits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Re-ranqueia os candidatos usando um cross-encoder (query, passage) -> score.
+    Mantém o mesmo dicionário 'hits', substituindo 'score' pelo score do cross-encoder.
+    """
+    model_name = "cross-encoder/ms-marco-MiniLM-L-6-v2"  # rápido e eficiente
+    ce = CrossEncoder(model_name)
+
+    pairs = [(query, h["text"]) for h in hits]
+    scores = ce.predict(pairs)  # numpy array
+
+    # aplica novos scores e ordena desc
+    for h, s in zip(hits, scores):
+        h["score_ce"] = float(s)
+    hits = sorted(hits, key=lambda x: x["score_ce"], reverse=True)
+
+    # reatribui rank
+    for i, h in enumerate(hits, start=1):
+        h["rank"] = i
+    return hits
 
 
 # ----------------- MAIN -----------------
@@ -174,17 +196,26 @@ def main():
     ap.add_argument("--generate", action="store_true", help="Se presente, chama LLM para gerar resposta")
     ap.add_argument("--gen-model", type=str, default="Qwen/Qwen2.5-3B-Instruct",
                     help="Modelo HuggingFace para geração")
-    ap.add_argument("--max-context-chars", type=int, default=4000, help="Limite de caracteres do contexto")
+    ap.add_argument("--max-context-chars", type=int, default=1700, help="Limite de caracteres do contexto")
     ap.add_argument("--dtype", type=str, default="fp16", choices=["fp16","bf16","fp32"],
                     help="Precisão da GPU (default: fp16)")
     ap.add_argument("--bits4", action="store_true", help="Ativa quantização 4-bit (bitsandbytes)")
+    ap.add_argument("--rerank", action="store_true", help="Ativa re-ranking com cross-encoder")
+    ap.add_argument("--m", type=int, default=50, help="Candidatos iniciais do FAISS para re-ranking (default: 50)")
+
     args = ap.parse_args()
 
     index_dir = Path(args.index_dir).expanduser().resolve()
     index, metas = load_index(index_dir)
 
     print(f"[1/2] Buscando: {args.query!r}")
-    hits = retrieve(index, metas, args.query, args.model, k=args.k)
+    #hits = retrieve(index, metas, args.query, args.model, k=args.k)
+    m = args.m if args.rerank else args.k
+    hits = retrieve(index, metas, args.query, args.model, k=m)
+    if args.rerank:
+        hits = rerank_hits(args.query, hits)[:args.k]
+
+    
     pretty_print_hits(hits)
 
     if args.generate:
