@@ -27,6 +27,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer, CrossEncoder
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from pprint import pprint
 
 
 # ----------------- FAISS / IO -----------------
@@ -122,6 +123,27 @@ def _highlight_terms(text: str, terms: Iterable[str], enable_color: bool = True)
         text = re.sub(re.escape(t), colorize(r"\g<0>", "yellow", bold=True, enable=enable_color), text, flags=re.I)
     return text
 
+# def print_full_text(
+#     hits: List[Dict[str, Any]],
+#     ranks_to_show: Iterable[int],
+#     wrap: int = 100,
+#     highlight_terms_from_query: Optional[str] = None,
+#     color: bool = True,
+# ):
+#     """Imprime texto completo dos ranks selecionados, com wrap e realce opcional."""
+#     ranks_set = set(ranks_to_show)
+#     for h in hits:
+#         if h["rank"] not in ranks_set:
+#             continue
+#         header = f"[{h['rank']}] {format_citation(h)}  |  chunk_id: {h.get('chunk_id')}  |  tipo: {h.get('format')}  |  fonte: {h.get('source_file')}"
+#         print("\n" + colorize(header, "green", bold=True, enable=color))
+#         txt = h["text"]
+#         if highlight_terms_from_query:
+#             terms = re.split(r"\s+", highlight_terms_from_query.strip())
+#             txt = _highlight_terms(txt, terms, enable_color=color)
+#         print(textwrap.fill(txt, width=wrap, replace_whitespace=False, drop_whitespace=False))
+
+
 def print_full_text(
     hits: List[Dict[str, Any]],
     ranks_to_show: Iterable[int],
@@ -129,18 +151,41 @@ def print_full_text(
     highlight_terms_from_query: Optional[str] = None,
     color: bool = True,
 ):
-    """Imprime texto completo dos ranks selecionados, com wrap e realce opcional."""
+    """Exibe o texto completo dos chunks selecionados com metadados formatados e destaque opcional."""
     ranks_set = set(ranks_to_show)
     for h in hits:
         if h["rank"] not in ranks_set:
             continue
-        header = f"[{h['rank']}] {format_citation(h)}  |  chunk_id: {h.get('chunk_id')}  |  tipo: {h.get('format')}  |  fonte: {h.get('source_file')}"
-        print("\n" + colorize(header, "green", bold=True, enable=color))
+
+        header_info = {
+            "Rank": h["rank"],
+            "Título": format_citation(h),
+            "Chunk ID": h.get("chunk_id", "—"),
+            "Tipo": h.get("format", "—"),
+            "Fonte": h.get("source_file", "—"),
+            "Score": f"{h.get('score', 0):.4f}",
+        }
+
+        print("\n" + "=" * 120)
+        pprint(colorize("📘  Informações do Documento", "green", bold=True, enable=color))
+        pprint(header_info, sort_dicts=False, width=120)
+        print("-" * 120)
+
         txt = h["text"]
         if highlight_terms_from_query:
             terms = re.split(r"\s+", highlight_terms_from_query.strip())
             txt = _highlight_terms(txt, terms, enable_color=color)
-        print(textwrap.fill(txt, width=wrap, replace_whitespace=False, drop_whitespace=False))
+
+        wrapped = textwrap.fill(
+            txt.strip(),
+            width=wrap,
+            replace_whitespace=False,
+            drop_whitespace=False,
+        )
+
+        pprint(colorize("📝  Texto:", "cyan", bold=True, enable=color))
+        pprint(wrapped)
+        print("=" * 120 + "\n")
 
 
 # ----------------- GERAÇÃO COM LLM (economia de VRAM) -----------------
