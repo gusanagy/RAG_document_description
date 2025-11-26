@@ -1,109 +1,167 @@
-
-
 # chat_ui.py
 import streamlit as st
 from pathlib import Path
 from query_engine import run_query
 
+# ===============================
 # Config básica da página
-st.set_page_config(page_title="RAG Chat", page_icon="📚", layout="wide")
+# ===============================
+st.set_page_config(page_title="Chat Book RAG", page_icon="📚", layout="wide")
 
-st.title("📚 Chat RAG — Consulta ao seu dataset")
+st.title("📚 Chat Book RAG — Consulta ao seu dataset")
 st.caption("Consulta seus chunks de livros com FAISS, com e sem LLM.")
 
-# ---------- Estado global do chat ----------
+# ===============================
+# Estado global do chat
+# ===============================
 if "messages" not in st.session_state:
-    # Cada mensagem: {"role": "user"|"assistant", "content": str}
     st.session_state["messages"] = []
 
 if "last_hits" not in st.session_state:
     st.session_state["last_hits"] = []
 
-# ---------- Sidebar: configuração ----------
+# ===============================
+# Sidebar: Configurações agrupadas
+# ===============================
+
+st.sidebar.header("⚙️ Configurações do RAG")
+
+# --- Caminho do índice ---
 index_dir = st.sidebar.text_input(
-    "Caminho do índice",
+    "📁 Caminho do índice FAISS",
     "/home/pdi_4/Documents/Documentos/rag/books_rag/index"
 )
 
-rerank = st.sidebar.checkbox("Re-ranking", False)
-use_llm = st.sidebar.checkbox("Usar LLM", True)
+st.sidebar.markdown("---")
+
+# --- Retrieval ---
+st.sidebar.subheader("🔍 Retrieval")
+embed_model = st.sidebar.text_input(
+    "Modelo de Embeddings",
+    "sentence-transformers/all-MiniLM-L6-v2"
+)
+k = st.sidebar.number_input("Top-K", min_value=1, max_value=50, value=7, step=1)
+rerank = st.sidebar.checkbox("Re-ranking (Cross-Encoder)", False)
+ce_model_name = st.sidebar.text_input(
+    "Modelo de Re-ranking",
+    "cross-encoder/ms-marco-MiniLM-L-6-v2"
+)
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("⚠️ Rode com:\n\n```bash\nstreamlit run chat_ui.py\n```")
+
+# --- Structured Answer ---
+st.sidebar.subheader("📘 Resposta (Structured)")
+sentences_per_doc = st.sidebar.slider("Frases por documento", 1, 10, 4)
+group_by_doc = st.sidebar.checkbox("Agrupar por documento", True)
+wrap = st.sidebar.number_input("Wrap (colunas)", min_value=60, max_value=140, value=100)
+
+st.sidebar.markdown("---")
+
+# --- LLM Generation ---
+st.sidebar.subheader("🤖 Resposta com LLM")
+use_llm = st.sidebar.checkbox("Usar LLM", True)
+
+gen_model_name = st.sidebar.text_input(
+    "Modelo LLM",
+    "Qwen/Qwen2.5-3B-Instruct"
+)
+max_context_chars = st.sidebar.number_input(
+    "Máx. caracteres do contexto", min_value=500, max_value=20000, value=5000, step=500
+)
+limit_context_hits = st.sidebar.number_input(
+    "Máx. chunks no contexto", min_value=1, max_value=20, value=6
+)
+max_new_tokens = st.sidebar.number_input(
+    "Máx. tokens gerados", min_value=32, max_value=2048, value=500
+)
+
+dtype_str = st.sidebar.selectbox("dtype", ["fp16", "bf16", "fp32"], index=0)
+bits = st.sidebar.selectbox("Quantização (bitsandbytes)", ["none", "8", "4"], index=0)
+gpu_mem = st.sidebar.text_input("GPU mem limit (ex: 10GiB)", value="")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("🔥 Rode com:\n```\nstreamlit run chat_ui.py\n```")
 
 st.divider()
 
-# ---------- Renderiza histórico de mensagens ----------
+# ===============================
+# Renderiza histórico do chat
+# ===============================
 for msg in st.session_state["messages"]:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ---------- Entrada do usuário ----------
+# ===============================
+# Entrada do usuário
+# ===============================
 q = st.chat_input("Digite uma pergunta sobre seus livros...")
 
 if q:
-    # 1) registra & mostra mensagem do usuário
+    # Mostra pergunta no chat
     st.session_state["messages"].append({"role": "user", "content": q})
     with st.chat_message("user"):
         st.markdown(q)
 
-    # 2) valida índice
+    # Valida índice
     index_path = Path(index_dir).expanduser().resolve()
     if not (index_path / "faiss.index").exists() or not (index_path / "meta.json").exists():
         err = f"Índice inválido em `{index_path}` (faiss.index ou meta.json ausentes)."
         with st.chat_message("assistant"):
             st.error(err)
-        st.session_state["messages"].append({"role": "assistant", "content": f"❌ {err}"})
+        st.session_state["messages"].append({"role": "assistant", "content": err})
+
     else:
-        # 3) chama o motor de busca / geração
+        # Consulta o motor RAG
         with st.spinner("Consultando FAISS e gerando respostas..."):
             out = run_query(
                 index_dir=str(index_path),
                 query=q,
                 rerank_enabled=rerank,
                 use_llm=use_llm,
-                embed_model="sentence-transformers/all-MiniLM-L6-v2",
-                k=7,
-                ce_model_name="cross-encoder/ms-marco-MiniLM-L-6-v2",
-                # structured
-                sentences_per_doc=4,
-                group_by_doc=True,
-                wrap=100,
-                # llm
-                gen_model_name="Qwen/Qwen2.5-3B-Instruct",
-                max_context_chars=5000,
-                limit_context_hits=6,
-                dtype_str="fp16",
-                bits="none",
-                gpu_mem=None,
-                max_new_tokens=500,
+
+                # RETRIEVAL
+                embed_model=embed_model,
+                k=k,
+                ce_model_name=ce_model_name,
+
+                # STRUCTURED
+                sentences_per_doc=sentences_per_doc,
+                group_by_doc=group_by_doc,
+                wrap=wrap,
+
+                # LLM
+                gen_model_name=gen_model_name,
+                max_context_chars=max_context_chars,
+                limit_context_hits=limit_context_hits,
+                dtype_str=dtype_str,
+                bits=bits,
+                gpu_mem=gpu_mem if gpu_mem.strip() else None,
+                max_new_tokens=max_new_tokens,
             )
 
-        # 4) resposta structured
-        structured_text = out.get("structured_answer") or "_Sem resposta structured._"
-        structured_block = "### 🧩 Resposta (Structured)\n" + structured_text
-
+        # Resposta structured
+        msg_struct = "### 🧩 Resposta (Structured)\n" + (out["structured_answer"] or "_Sem resposta structured._")
         with st.chat_message("assistant"):
-            st.markdown(structured_block)
-        st.session_state["messages"].append({"role": "assistant", "content": structured_block})
+            st.markdown(msg_struct)
+        st.session_state["messages"].append({"role": "assistant", "content": msg_struct})
 
-        # 5) resposta LLM (se habilitado)
+        # Resposta LLM
         if use_llm:
-            llm_raw = out.get("llm_answer") or "_LLM não retornou resposta ou foi desativada._"
-            llm_block = "### 🤖 Resposta (LLM)\n" + llm_raw
-
+            msg_llm = "### 🤖 Resposta (LLM)\n" + (out["llm_answer"] or "_LLM não retornou resposta._")
             with st.chat_message("assistant"):
-                st.markdown(llm_block)
-            st.session_state["messages"].append({"role": "assistant", "content": llm_block})
+                st.markdown(msg_llm)
+            st.session_state["messages"].append({"role": "assistant", "content": msg_llm})
 
-        # 6) guarda hits para a seção de fontes
-        st.session_state["last_hits"] = out.get("hits", [])
+        # Armazena hits
+        st.session_state["last_hits"] = out["hits"]
 
-# ---------- Fontes (chunks recuperados) ----------
+# ===============================
+# Fontes (bottom section)
+# ===============================
 hits = st.session_state.get("last_hits", [])
 with st.expander("📄 Fontes (chunks recuperados)"):
     if not hits:
-        st.write("Nenhum hit disponível ainda. Faça uma pergunta no chat.")
+        st.write("Nenhum hit disponível ainda.")
     else:
         for i, h in enumerate(hits, start=1):
             title = h.get("doc_title") or "Documento sem título"
@@ -116,8 +174,6 @@ with st.expander("📄 Fontes (chunks recuperados)"):
                 cite += f" (p.{pg})"
 
             st.markdown(f"**[{i}]** {cite}")
-            text = h.get("text", "")
-            if len(text) > 800:
-                text = text[:800] + "…"
-            st.write(text)
+            txt = h.get("text", "")
+            st.write(txt[:800] + "…" if len(txt) > 800 else txt)
             st.markdown("---")

@@ -486,9 +486,12 @@ def generate_answer_llm(
     system = (
         "Você é um assistente técnico. Responda ESTRITAMENTE com base no contexto abaixo.\n"
         "FORMATO SUGERIDO:\n"
-        "De acordo com: <Título> (p.X|pp.X–Y) — <Seção>\n"
-        "- ponto 1\n- ponto 2\n...\n"
+        "De acordo com:\n <Título> (p.X|pp.X–Y) — <Seção>\n\n"
+        "Explicação clara e objetiva. Explicando e complementando as informações do texto\n"
         "Se o contexto não contiver a informação necessária, deixe isso explícito."
+        "Linguagem clara e formal."
+        "Termos tecnicos quando apropriado."
+        
     )
     user = f"Pergunta: {question}\n\nContexto:\n{context}\n\nResposta:"
 
