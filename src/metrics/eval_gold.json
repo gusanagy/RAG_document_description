@@ -159,6 +159,166 @@
       "gold_docs": [
         "pensamento e aprendizado pragmatico refatore seu cerebro"
       ]
+    },
+    {
+      "id": 21,
+      "question": "No livro Absolute Beginner’s Guide to Algorithms em JavaScript, como é feita a distinção entre entender o algoritmo em si e apenas decorar a implementação em código?",
+      "gold_answer": "Absolute Beginner’s Guide to Algorithms enfatiza que aprender algoritmos não é o mesmo que memorizar trechos de código em JavaScript. O livro diferencia claramente a ideia abstrata do algoritmo, descrita como uma sequência lógica de passos independente de linguagem, da implementação concreta em JS, que é apenas uma forma possível de materializar essa ideia. Ele incentiva o leitor a primeiro compreender o problema, o fluxo de decisões, os casos de borda e a complexidade aproximada, para só então traduzir isso em funções, laços e estruturas de dados específicas da linguagem. Essa separação ajuda o desenvolvedor iniciante a reaproveitar o mesmo raciocínio algorítmico em outras linguagens e contextos, em vez de ficar preso a “receitas” de código prontas.",
+      "gold_docs": [
+        "Absolute Beginner’s Guide to Algorithms: A Practical Introduction to Data Structures and Algorithms in JavaScript (for True Epub)"
+      ]
+    },
+    {
+      "id": 22,
+      "question": "No livro Domain Adaptation in Computer Vision Applications, como é descrito o problema de adaptação de domínio em visão computacional e por que métodos de aprendizado supervisionado tradicional falham nesse cenário?",
+      "gold_answer": "Domain Adaptation in Computer Vision Applications descreve adaptação de domínio como a situação em que um modelo é treinado em um conjunto de dados fonte, com certa distribuição de imagens, e precisa generalizar para um domínio alvo com estatísticas diferentes, por exemplo mudanças de iluminação, sensor ou estilo. Métodos supervisionados tradicionais assumem que treino e teste vêm da mesma distribuição, o que leva a queda acentuada de desempenho quando essa hipótese é violada. O livro discute abordagens que procuram alinhar distribuições ou extrair representações mais invariantes ao domínio, via técnicas como matching de distribuições, redes adversariais e aprendizado de features compartilhadas, justamente para reduzir o gap entre fonte e alvo.",
+      "gold_docs": [
+        "[Advances in Computer Vision and Pattern Recognition ] Gabriela Csurka (eds.)   Domain Adaptation in Computer Vision Applications (2017, Springer) [10.1007 978 3 319 58347 1]   libgen.li"
+      ]
+    },
+    {
+      "id": 23,
+      "question": "Em Computer Vision: Models, Learning, and Inference, qual é a diferença conceitual entre modelos generativos e discriminativos para visão computacional?",
+      "gold_answer": "Computer Vision: Models, Learning, and Inference apresenta modelos generativos como aqueles que tentam modelar a distribuição conjunta dos dados e rótulos, ou mesmo o processo físico de formação da imagem, permitindo em princípio gerar novas amostras ou simular o sistema. Já modelos discriminativos focam em aprender diretamente o mapeamento de entrada para saída, como p(rótulo|imagem), sem se preocupar em explicar detalhadamente como a imagem foi gerada. O livro mostra que abordagens generativas tendem a ser mais interpretáveis e integráveis com conhecimento prévio, enquanto as discriminativas são muitas vezes mais simples e eficientes para tarefas de classificação e detecção, desde que haja dados rotulados suficientes.",
+      "gold_docs": [
+        "Computer Vision: Models, Learning, and Inference"
+      ]
+    },
+    {
+      "id": 24,
+      "question": "No livro Probabilistic Approaches to Robotic Perception, qual é o papel de filtros baseados em Bayes (como filtro de Kalman e filtros de partículas) na percepção robótica?",
+      "gold_answer": "Probabilistic Approaches to Robotic Perception argumenta que filtros bayesianos são o núcleo de muitos sistemas de percepção para robôs porque permitem representar incerteza explicitamente ao longo do tempo. Em vez de manter apenas um estado único, o robô mantém uma distribuição de probabilidade sobre poses, mapas ou objetos, atualizada a cada nova medida sensorial. Filtros de Kalman e variantes lidam bem com modelos aproximadamente lineares e gaussianos, enquanto filtros de partículas tratam de cenários mais não lineares e multimodais. Essa formulação probabilística é fundamental para fusão sensorial, localização e rastreamento robustos em ambientes ruidosos e parcialmente observáveis.",
+      "gold_docs": [
+        "[Springer Tracts in Advanced Robotics №91] João Filipe Ferreira, Jorge Miranda Dias (auth.)   Probabilistic Approaches to Robotic Perception (2014, Springer) [10.1007 978 3 319 02006 8]   libgen.li"
+      ]
+    },
+    {
+      "id": 25,
+      "question": "Em Deep Learning, de Goodfellow, Bengio e Courville, como o livro motiva o uso de representações profundas em vez de features manuais em tarefas de visão e processamento de linguagem?",
+      "gold_answer": "Deep Learning argumenta que representações profundas permitem que o próprio modelo aprenda hierarquias de características a partir dos dados, em vez de depender de features artesanais projetadas manualmente. Em visão, isso significa que camadas iniciais podem capturar bordas e texturas, camadas intermediárias aprendem partes de objetos e camadas superiores representam conceitos mais abstratos. Da mesma forma, em linguagem natural, embeddings e camadas sucessivas capturam relações sintáticas e semânticas de forma distribuída. O livro enfatiza que essa capacidade de aprender representações progressivamente mais invariantes e discriminativas é a principal razão pelo sucesso de redes profundas em comparação a pipelines baseados em engenharia manual de atributos.",
+      "gold_docs": [
+        "Ian Goodfellow, Yoshua Bengio, Aaron Courville   Deep Learning [pre pub version] (2016, MIT Press)   libgen.li.pdf.opdownload"
+      ]
+    },
+    {
+      "id": 26,
+      "question": "Em PyTorch Computer Vision Cookbook, por que uma abordagem em forma de “receitas” é útil para prototipar rapidamente soluções em visão computacional?",
+      "gold_answer": "PyTorch Computer Vision Cookbook adota o formato de receitas justamente para permitir que o desenvolvedor parta de problemas concretos, como classificação, detecção ou segmentação, e veja soluções completas passo a passo. Esse estilo favorece prototipagem rápida porque fornece blocos reutilizáveis: carregamento de dados, definições de modelos, laços de treinamento, técnicas de data augmentation e avaliação. Em vez de recomeçar do zero a cada projeto, o leitor aprende a adaptar e combinar essas receitas a novos cenários, acelerando a experimentação e reduzindo a chance de erros triviais na infraestrutura do experimento.",
+      "gold_docs": [
+        "Michael Avendi   PyTorch Computer Vision Cookbook  Over 70 recipes to solve computer vision and image processing problems using PyTorch 1.x (2020, Packt Publishing)   libgen.li"
+      ]
+    },
+    {
+      "id": 27,
+      "question": "No livro Build Your Own Redis with C/C++, como a implementação manual de estruturas de dados e protocolos de rede ajuda a compreender sistemas de banco de dados em memória?",
+      "gold_answer": "Build Your Own Redis with C/C++ mostra que, ao implementar manualmente estruturas de dados como dicionários, listas ligadas e árvores, além do protocolo de comunicação de um servidor Redis-like, o leitor passa a entender por dentro decisões de desempenho e trade-offs de design. Em vez de tratar Redis como uma “caixa preta”, o livro convida a reconstruir os componentes essenciais: gerenciamento de conexões, parsing de comandos, persistência básica e operações atômicas. Essa experiência prática esclarece por que certas operações são rápidas, por que outras são custosas e como detalhes de implementação impactam latência, consumo de memória e comportamento em concorrência.",
+      "gold_docs": [
+        "J. Smith   Build Your Own Redis with C C++. Learn network programming and data structures by coding from scratch (2023)   libgen.li"
+      ]
+    },
+    {
+      "id": 28,
+      "question": "Em Learn Data Structures and Algorithms with Golang, como o livro aborda o trade-off entre tempo e espaço na escolha de estruturas de dados?",
+      "gold_answer": "Learn Data Structures and Algorithms with Golang discute o trade-off tempo–espaço mostrando que não existe uma estrutura universalmente melhor: listas, mapas, árvores e filas de prioridade têm custos diferentes para operações como inserção, busca e remoção. O livro usa exemplos em Go para comparar implementações que consumem mais memória mas oferecem acesso mais rápido, versus opções mais compactas porém com tempo de acesso maior. Ele enfatiza que a escolha adequada depende do padrão de uso: frequência de leituras versus escritas, necessidade de ordenação, tamanho máximo esperado dos dados e requisitos de latência. A mensagem central é que o desenvolvedor deve raciocinar conscientemente sobre esses trade-offs em vez de usar sempre a mesma estrutura por hábito.",
+      "gold_docs": [
+        "Learn Data Structures and Algorithms with Golang"
+      ]
+    },
+    {
+      "id": 29,
+      "question": "No livro Java Programming for Beginners, como é construída a intuição inicial sobre o ciclo de vida de um programa Java, do código-fonte até a execução na JVM?",
+      "gold_answer": "Java Programming for Beginners explica o ciclo de vida de um programa Java destacando três etapas principais: escrita do código-fonte em arquivos `.java`, compilação para bytecode em arquivos `.class` e execução desse bytecode pela JVM. O livro usa exemplos simples para mostrar como o compilador verifica tipos e estrutura do código, gerando uma representação intermediária portátil. Em seguida, a JVM interpreta ou JIT-compila esse bytecode em instruções específicas para a máquina física. Essa visão ajuda iniciantes a entender por que erros de compilação e erros em tempo de execução são diferentes, e como a JVM possibilita que o mesmo programa rode em plataformas distintas sem recompilação.",
+      "gold_docs": [
+        "Java Programming for Beginners"
+      ]
+    },
+    {
+      "id": 30,
+      "question": "Em Deciphering Object Oriented Programming with C++, como o conceito de RAII se relaciona com encapsulamento e gestão de recursos?",
+      "gold_answer": "Deciphering Object Oriented Programming with C++ apresenta RAII (Resource Acquisition Is Initialization) como uma extensão prática do encapsulamento: um objeto não encapsula apenas dados e comportamento, mas também a responsabilidade por recursos como memória, arquivos ou locks. Ao adquirir um recurso no construtor e liberá-lo no destrutor, o código garante que o tempo de vida do recurso está atrelado ao tempo de vida do objeto. Isso reduz vazamentos, simplifica o tratamento de exceções e torna o uso de recursos mais declarativo. O livro mostra que, quando classes são projetadas com RAII em mente, o chamador precisa se preocupar menos com chamadas manuais de “open”/“close” ou “lock”/“unlock”, pois essas operações ficam escondidas atrás de uma interface segura.",
+      "gold_docs": [
+        "Dorothy R. Kirk   Deciphering Object Oriented Programming with C++ (2022, Packt)   libgen.li"
+      ]
+    },
+    {
+      "id": 31,
+      "question": "No livro Functional, Object-Oriented, and Concurrent Programming, quais são os benefícios e desafios de combinar múltiplos paradigmas em um mesmo sistema?",
+      "gold_answer": "Functional, Object-Oriented, and Concurrent Programming discute que combinar paradigmas permite atacar problemas diferentes com estilos de programação mais adequados: por exemplo, usar imutabilidade e funções puras para lógica de negócio complexa, orientação a objetos para modelar entidades de domínio e abstrações concorrentes para paralelismo e comunicação entre componentes. Os benefícios incluem maior expressividade e possibilidade de isolar efeitos colaterais. Os desafios aparecem na engenharia do sistema: manter uma arquitetura coerente, evitar misturar estilos de forma caótica e garantir que a equipe compreenda as convenções adotadas. O livro sugere delimitar contextos claros para cada paradigma e definir interfaces bem pensadas entre essas partes.",
+      "gold_docs": [
+        "Functional, Object-Oriented, and Concurrent Programming"
+      ]
+    },
+    {
+      "id": 32,
+      "question": "No livro progit, qual é a diferença conceitual entre commits, branches e remotes em um fluxo de trabalho típico com Git?",
+      "gold_answer": "progit explica commits como snapshots imutáveis do estado do código em um ponto no tempo, formando uma linha do tempo de mudanças. Branches são ponteiros nomeados para commits específicos, permitindo desenvolver funcionalidades em paralelo sem misturar imediatamente as alterações na linha principal. Já remotes representam repositórios hospedados em outros locais, como servidores ou serviços de hospedagem, usados para compartilhar trabalho entre pessoas. O livro enfatiza que entender essa separação ajuda a usar Git de forma mais segura: commits descrevem o histórico, branches organizam fluxo de trabalho local e remotes coordenam colaboração entre máquinas e desenvolvedores.",
+      "gold_docs": [
+        "progit"
+      ]
+    },
+    {
+      "id": 33,
+      "question": "Em Scrum – A Arte de Fazer o Dobro de Trabalho na Metade do Tempo, como são apresentados os papéis principais do Scrum e a função de cada um no processo de desenvolvimento?",
+      "gold_answer": "Scrum – A Arte de Fazer o Dobro de Trabalho na Metade do Tempo introduz três papéis centrais: Product Owner, Scrum Master e Time de Desenvolvimento. O Product Owner é responsável por maximizar o valor do produto, priorizando o backlog e representando os interesses dos stakeholders. O Scrum Master atua como facilitador do processo, removendo impedimentos, protegendo o time de interrupções externas e garantindo que os princípios do Scrum sejam seguidos. O Time de Desenvolvimento é multifuncional e auto-organizado, responsável por transformar itens do backlog em incrementos de software potencialmente entregáveis. O livro argumenta que a clareza desses papéis reduz confusão, melhora a comunicação e reforça a responsabilidade compartilhada pelo resultado.",
+      "gold_docs": [
+        "Scrum - a arte de fazer o dobro de trabalho na metade do tempo"
+      ]
+    },
+    {
+      "id": 34,
+      "question": "No livro Szeliski CVAABook 2ndEd, como é estruturado o pipeline clássico de visão computacional e qual a relação entre as etapas de detecção de features, correspondência e reconstrução?",
+      "gold_answer": "Szeliski CVAABook 2ndEd descreve o pipeline clássico de visão computacional em etapas como aquisição de imagem, detecção de features, descrição, correspondência, estimativa geométrica e reconstrução. Pontos de interesse são detectados em imagens individuais e descritos por vetores que capturam o padrão local. Esses descritores são então correspondidos entre imagens diferentes para identificar projeções do mesmo ponto 3D. A partir dessas correspondências, modelos geométricos como matrizes fundamentais ou projeções de câmera são estimados, permitindo reconstruir estrutura 3D ou calcular movimento. O livro mostra que erros em qualquer etapa se acumulam e que escolher bons detectores, descritores e critérios de correspondência é crucial para a qualidade da reconstrução.",
+      "gold_docs": [
+        "Szeliski CVAABook 2ndEd"
+      ]
+    },
+    {
+      "id": 35,
+      "question": "Em Theory of Computation, de Jum Hefferon, qual é a relação entre autômatos, gramáticas formais e linguagens regulares?",
+      "gold_answer": "Theory of Computation Jum Hefferon apresenta autômatos finitos, gramáticas regulares e expressões regulares como três formas equivalentes de descrever linguagens regulares. Autômatos modelam a computação como um processo de leitura sequencial de símbolos com transições entre estados. Gramáticas formais regulares produzem cadeias por regras de produção que refletem a mesma estrutura de estados e transições. Expressões regulares oferecem uma notação compacta para especificar os conjuntos de cadeias aceitos. O livro enfatiza que essa equivalência permite escolher a representação mais conveniente para análise, prova ou implementação, mantendo a mesma classe de linguagens.",
+      "gold_docs": [
+        "Theory of computation Jum Hefferon"
+      ]
+    },
+    {
+      "id": 36,
+      "question": "No livro lambda calculus and combination, como o cálculo lambda é apresentado como um modelo fundamental de computação e qual a ideia básica de abstração de função nesse contexto?",
+      "gold_answer": "lambda calculus and combination apresenta o cálculo lambda como um modelo extremamente minimalista de computação, onde tudo é expresso em termos de funções e aplicação de funções. A ideia central de abstração é representar funções como expressões que recebem um argumento e produzem um resultado, usando uma notação como λx.E, em que x é o parâmetro e E é o corpo da função. Computar significa reduzir aplicações sucessivas, substituindo argumentos em corpos de funções. O livro mostra que, apesar da simplicidade sintática, o cálculo lambda é expressivo o bastante para codificar números, estruturas de dados e até controle de fluxo, servindo de base teórica para linguagens funcionais.",
+      "gold_docs": [
+        "lambda calculus and combination"
+      ]
+    },
+    {
+      "id": 37,
+      "question": "Em The Parametric Lambda Calculus, qual é a intuição por trás de polimorfismo paramétrico e como ele evita duplicação de código em sistemas de tipos mais ricos?",
+      "gold_answer": "The parametric lambda calculus discute polimorfismo paramétrico como a capacidade de definir funções que operam sobre tipos genéricos, sem depender de um tipo concreto específico. Em vez de escrever versões duplicadas de funções para inteiros, floats ou listas de diferentes tipos, o desenvolvedor escreve uma única definição parametrizada em um tipo abstrato. O sistema de tipos garante que essa função se comporta uniformemente para qualquer instância do tipo, preservando propriedades desejadas. O livro mostra que essa abordagem reduz duplicação, torna APIs mais gerais e permite raciocinar sobre código usando argumentos de parametricidade, ou seja, inferindo propriedades das funções apenas pelo fato de serem polimórficas.",
+      "gold_docs": [
+        "The parametric lambda calculus"
+      ]
+    },
+    {
+      "id": 38,
+      "question": "No livro Introduction to Algorithms, de Cormen e coautores, qual é o papel da análise assintótica e por que ela é importante para comparar algoritmos em vez de apenas medir tempo de execução na prática?",
+      "gold_answer": "Introduction to Algorithms enfatiza a análise assintótica, usando notação O-grande e variações, como uma forma de descrever como o custo de um algoritmo cresce com o tamanho da entrada, abstraindo detalhes de hardware e implementação. Em vez de depender de medições empíricas em máquinas específicas, a análise assintótica permite comparar algoritmos de forma teórica, identificando se um método é, por exemplo, linear, quadrático ou log-linear. O livro argumenta que essa visão de ordem de grandeza é crucial para prever comportamento em entradas muito maiores do que as usadas em testes e para guiar escolhas de projeto em sistemas que precisam escalar.",
+      "gold_docs": [
+        "thomas-h.-cormen-charles-e.-leiserson-ronald-l.-rivest-cliffo-introduction-to-algorithms-2022-the-mit-press-libgen.li-th"
+      ]
+    },
+    {
+      "id": 39,
+      "question": "No livro Probabilistic Approaches to Robotic Perception, como é tratada a fusão de múltiplos sensores (por exemplo, câmera e LIDAR) sob uma perspectiva probabilística?",
+      "gold_answer": "Probabilistic Approaches to Robotic Perception aborda fusão sensorial como o problema de combinar observações de diferentes sensores em um modelo probabilístico conjunto, levando em conta as incertezas e vieses de cada fonte. Em vez de simplesmente concatenar medições, o livro descreve como usar modelos gráficos e filtros bayesianos para ponderar contribuições de cada sensor conforme suas variâncias e confiabilidade contextual. Exemplos incluem combinação de câmera e LIDAR para estimar a pose ou a geometria do ambiente, onde um sensor pode complementar o outro em situações de oclusão, baixa luminosidade ou ruído. Essa abordagem aumenta robustez e reduz ambiguidades em comparação a usar um único tipo de dado.",
+      "gold_docs": [
+        "[Springer Tracts in Advanced Robotics №91] João Filipe Ferreira, Jorge Miranda Dias (auth.)   Probabilistic Approaches to Robotic Perception (2014, Springer) [10.1007 978 3 319 02006 8]   libgen.li"
+      ]
+    },
+    {
+      "id": 40,
+      "question": "Em Deep Learning, de Goodfellow, Bengio e Courville, como o problema de gradientes desaparecendo é descrito e quais estratégias são apresentadas para mitigá-lo em redes profundas?",
+      "gold_answer": "Deep Learning descreve o problema de gradientes desaparecendo como a tendência de derivadas se tornarem extremamente pequenas à medida que são propagadas para camadas iniciais de redes muito profundas, especialmente com certas funções de ativação e inicializações ruins. Isso faz com que pesos nas primeiras camadas aprendam muito lentamente ou praticamente não mudem. O livro apresenta várias estratégias para mitigação: uso de funções de ativação como ReLU e variantes, inicializações apropriadas que mantêm a variância dos sinais, normalização por lote e arquiteturas com conexões de atalho, como redes residuais. Em conjunto, essas técnicas permitem treinar redes mais profundas de forma estável e eficiente.",
+      "gold_docs": [
+        "Ian Goodfellow, Yoshua Bengio, Aaron Courville   Deep Learning [pre pub version] (2016, MIT Press)   libgen.li.pdf.opdownload"
+      ]
     }
   ]
 }

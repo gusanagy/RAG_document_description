@@ -1,7 +1,0 @@
-{
-  "query": "Como pensa um programador?",
-  "relevant_doc_ids": ["pdfcoffee.com_o-programador-pragmatico..._p00144_01"],
-  "retrieved_doc_ids": ["...", "..."],
-  "reference_answer": "Resposta gold que você escreveu",
-  "generated_answer": "Resposta do seu RAG"
-}

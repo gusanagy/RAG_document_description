@@ -491,7 +491,7 @@ def generate_answer_llm(
         "Se o contexto não contiver a informação necessária, deixe isso explícito."
         "Linguagem clara e formal."
         "Termos tecnicos quando apropriado."
-        
+
     )
     user = f"Pergunta: {question}\n\nContexto:\n{context}\n\nResposta:"
 
@@ -503,7 +503,7 @@ def generate_answer_llm(
     else:
         torch_dtype = torch.float32
 
-    device_map = "auto"
+    device_map = "cuda:0" if torch.cuda.is_available() else None
     num_gpus = torch.cuda.device_count()
     max_memory = _parse_gpu_mem(gpu_mem, num_gpus) if num_gpus > 0 else None
 
